@@ -5,6 +5,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Alert,
 } from "react-native";
 import CustomButton from "./CustomButton";
 import { icons, images } from "@/constants";
@@ -15,18 +16,123 @@ import { fetchAPI } from "@/lib/fetch";
 import { useAuth } from "@clerk/clerk-expo";
 import { useLocationStore } from "@/store";
 import { PaymentProps } from "@/types/type";
-import { baseURL, baseURL_server } from '../app/index';
+import { baseURL, baseURL_server } from "../app/index";
 import { io } from "socket.io-client";
+import { useStripe } from "@stripe/stripe-react-native";
 
 const paymentMethods = ["Cash", "Momo"];
 
 const socket = io(`${baseURL_server}`); // Replace with your WebSocket server URL
 
-const Payment = ({ actionButton, timeToDestion, price, driverId } : PaymentProps) => {
+const Payment = ({
+  actionButton,
+  timeToDestion,
+  price,
+  driverId,
+}: PaymentProps) => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showPaymentMethod, setShowPaymentMethod] = useState(false);
-  const openPaymentSheet = () => {
-    setShowPaymentMethod(true);
+  const user = {
+    fullName: "John Doe",
+    emailAddress: [{ emailAddress: "johndoe@example.com" }],
+  };
+
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
+
+  console.log(process.env.EXPO_SECRET_STRIPE_API_KEY!);
+  const initializePaymentSheet = async () => {
+    const { error } = await initPaymentSheet({
+      merchantDisplayName: "Ryde Inc.",
+      intentConfiguration: {
+        mode: {
+          amount: price * 100,
+          currencyCode: "usd",
+        },
+        confirmHandler: async (
+          paymentMethod,
+          shouldSavePaymentMethod,
+          intentCreationCallback
+        ) => {
+          const { paymentIntent, customer } = await fetchAPI(
+            "http://192.168.1.3:8081/(api)/(stripe)/create",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                name:
+                  user?.fullName ||
+                  user?.emailAddress[0]?.emailAddress.split("@")[0],
+                email: user?.emailAddress[0]?.emailAddress,
+                amount: price,
+                paymentMethodId: paymentMethod.id,
+              }),
+            }
+          );
+
+          if (paymentIntent.client_secret) {
+            const { result } = await fetchAPI(
+              "http://192.168.1.3:8081/(api)/(stripe)/pay",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  payment_method_id: paymentMethod.id,
+                  payment_intent_id: paymentIntent.id,
+                  customer_id: customer,
+                  client_secret: paymentIntent.client_secret,
+                }),
+              }
+            );
+
+            if (result.client_secret) {
+              await fetchAPI("http://192.168.1.3:8081/(api)/ride/create", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  origin_address: userAddress,
+                  destination_address: destinationAddress,
+                  origin_latitude: userLatitude,
+                  origin_longitude: userLongitude,
+                  destination_latitude: destinationLatitude,
+                  destination_longitude: destinationLongitude,
+                  ride_time: timeToDestion.toFixed(0),
+                  fare_price: price * 100,
+                  payment_status: "paid",
+                  driver_id: driverId,
+                  user_id: userId,
+                }),
+              });
+
+              intentCreationCallback({
+                clientSecret: result.client_secret,
+              });
+            }
+          }
+        },
+      },
+      returnURL: "myapp://book-ride",
+    });
+    if (!error) {
+      // setLoading(true);
+    }
+  };
+
+  const openPaymentSheet = async () => {
+    await initializePaymentSheet();
+
+    const { error } = await presentPaymentSheet();
+
+    if (error) {
+      Alert.alert(`Error code: ${error.code}`, error.message);
+    } else {
+      // setSuccess(true);
+    }
   };
 
   const handleConfrim = () => actionButton.handleConfirm();
@@ -43,9 +149,9 @@ const Payment = ({ actionButton, timeToDestion, price, driverId } : PaymentProps
   const { userId } = useAuth();
 
   const createRide = async () => {
-    try{
+    try {
       const response = await fetchAPI(`${baseURL}/(api)/ride/create`, {
-      // await fetchAPI("http://localhost:8081/(api)/ride/create", {
+        // await fetchAPI("http://localhost:8081/(api)/ride/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -71,13 +177,13 @@ const Payment = ({ actionButton, timeToDestion, price, driverId } : PaymentProps
       // Emit the event to the server
       socket.emit("booked_sender", {
         rideId: "10",
-      });  
+      });
 
       // console.log("Ride created and event emitted:", newRide);
     } catch (error) {
       console.error("Error creating ride:", error);
     }
-  }
+  };
 
   return (
     <View>
@@ -131,7 +237,7 @@ const Payment = ({ actionButton, timeToDestion, price, driverId } : PaymentProps
             title={"Go track"}
             onPress={() => {
               setShowPaymentModal(false);
-              handleConfrim()
+              handleConfrim();
               // router.push("/(root)/(tabs)/home");
             }}
             className={"mt-5"}

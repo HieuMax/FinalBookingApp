@@ -5,8 +5,8 @@ const Home = () => {
 };
 
 // export const baseURL = "http://192.168.1.75:8081";
-export const baseURL = "http://172.39.0.195:8081";
-export const baseURL_2 = "http://172.39.0.195:8082";
-export const baseURL_server = "http://172.39.0.195:3000";
+export const baseURL = "http://192.168.1.3:8081";
+export const baseURL_2 = "http://192.168.1.3:8082";
+export const baseURL_server = "http://192.168.1.3:3000";
 
 export default Home;
