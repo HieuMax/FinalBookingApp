@@ -128,7 +128,6 @@ const Payment = ({
     if (error) {
       Alert.alert(`Error code: ${error.code}`, error.message);
     } else {
-      // setSuccess(true);
       setShowPaymentMethod(false);
       setShowPaymentModal(true);
       handleConfrim();
