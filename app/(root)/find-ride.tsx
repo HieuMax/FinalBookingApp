@@ -29,12 +29,12 @@ const FindRide = () => {
 
   useEffect(() => {
     if (!destinationLatitude || !destinationLongitude || !userLatitude || !userLongitude) return;
-    console.log(`FindRide::`);
+    // console.log(`FindRide::`);
 
     const getValidRoute = async () => {
       try {
         const ferry = await fetchAndCalcFerryInfo([userLatitude,userLongitude],[destinationLatitude,destinationLongitude])
-        console.log(`FindRide::ferry: ${ferry}`);
+        // console.log(`FindRide::ferry: ${ferry}`);
         if (ferry) {
           setIsValid(false);
           setOpenForm(true);
@@ -50,7 +50,7 @@ const FindRide = () => {
   }, [destinationLongitude,destinationLatitude])
 
   useEffect(() => {
-    console.log(`FindRide::openForm: ${openForm}`);
+    // console.log(`FindRide::openForm: ${openForm}`);
   }, [openForm])
 
   return (

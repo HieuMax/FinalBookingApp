@@ -1,12 +1,296 @@
-import { Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+// src/screens/ChatScreen.tsx
+import React, { useState, useEffect, useRef } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  SafeAreaView,
+} from "react-native";
+import { useRouter } from "expo-router"; // thêm dòng này ở đầu file
 
-const Chat = () => {
+import { useAuth } from "@clerk/clerk-expo";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "@/types/navigation";
+import { io } from "socket.io-client";
+
+import { Stack } from "expo-router";
+import Header from "@/components/Header";
+import { baseURL_server } from "../../index";
+
+type ChatRoom = {
+  id: number;
+  user_id: string;
+  driver_id: string;
+  otherUser: { id: string; name: string; profileImageUrl: string };
+  lastMessage: string;
+  unreadCount: number;
+};
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, "Chat">;
+
+const ChatScreen: React.FC = () => {
+  const { userId } = useAuth();
+  const router = useRouter();
+  const navigation = useNavigation<NavigationProp>();
+  const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
+  const socket = useRef(io(`${baseURL_server}`)).current;
+  const fetchChatRooms = async () => {
+    try {
+      const response = await fetch(`${baseURL_server}/chat-rooms/${userId}`);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch chat rooms");
+      }
+      const data = await response.json();
+      // console.log("Fetched chat rooms:", data);
+      setChatRooms(data);
+    } catch (error) {
+      console.error("Error fetching chat rooms app:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchChatRooms();
+
+    // Lắng nghe sự kiện updateLastMessage từ Socket.IO
+    socket.on("updateLastMessage", ({ roomId, lastMessage, unreadCount }) => {
+      console.log(
+        `Received updateLastMessage for room ${roomId}: lastMessage=${lastMessage}, unreadCount=${unreadCount}`
+      );
+      setChatRooms((prevChatRooms) =>
+        prevChatRooms.map((room) =>
+          room.id.toString() === roomId
+            ? {
+                ...room,
+                lastMessage: lastMessage || room.lastMessage,
+                unreadCount:
+                  unreadCount !== null ? unreadCount : room.unreadCount,
+              }
+            : room
+        )
+      );
+    });
+
+    // Lắng nghe sự kiện message để cập nhật tin nhắn mới
+    socket.on("message", ({ roomId, message }) => {
+      console.log(`Received new message for room ${roomId}:`, message);
+      setChatRooms((prevChatRooms) =>
+        prevChatRooms.map((room) => {
+          if (room.id.toString() === roomId) {
+            // Kiểm tra xem tin nhắn có phải từ người khác không
+            const isMessageFromOther = message.sender_id !== userId;
+            return {
+              ...room,
+              lastMessage: message.message_text,
+              unreadCount: isMessageFromOther
+                ? room.unreadCount + 1
+                : room.unreadCount,
+            };
+          }
+          return room;
+        })
+      );
+    });
+
+    // Lắng nghe sự kiện messagesRead để cập nhật trạng thái đã đọc
+    socket.on("messagesRead", ({ roomId }) => {
+      console.log(`Messages marked as read for room ${roomId}`);
+      setChatRooms((prevChatRooms) =>
+        prevChatRooms.map((room) =>
+          room.id.toString() === roomId ? { ...room, unreadCount: 0 } : room
+        )
+      );
+    });
+
+    // Dọn dẹp khi component unmount
+    return () => {
+      socket.off("updateLastMessage");
+      socket.off("message");
+      socket.off("messagesRead");
+    };
+  }, [userId]); // Thêm userId vào dependency array
+
+  // const handleChatPress = (room: ChatRoom) => {
+  //   const markMessagesAsRead = async () => {
+  //     try {
+  //       await fetch(`${baseURL_server}/mark-read/${room.id}/${userId}`, {
+  //         method: "POST",
+  //       });
+  //       setChatRooms((prevChatRooms) =>
+  //         prevChatRooms.map((r) =>
+  //           r.id === room.id ? { ...r, unreadCount: 0 } : r
+  //         )
+  //       );
+  //     } catch (error) {
+  //       console.error("Error marking messages as read:", error);
+  //     }
+  //   };
+
+  //   markMessagesAsRead();
+  //   // 👉 điều hướng bằng expo-router
+  //   router.push({
+  //     pathname: `/chat/${room.id}`,
+  //     params: { user: JSON.stringify(room.otherUser) }, // user sẽ được parse lại trong trang chi tiết
+  //   });
+  // };
+
+  const handleChatPress = (room: ChatRoom) => {
+    // Đánh dấu tất cả tin nhắn trong phòng chat là đã đọc khi vào phòng
+    const markMessagesAsRead = async () => {
+      try {
+        await fetch(
+          `${baseURL_server}/messages/mark-as-read/${room.id}/${userId}`,
+          {
+            method: "POST",
+          }
+        );
+        setChatRooms((prevChatRooms) =>
+          prevChatRooms.map((r) =>
+            r.id === room.id ? { ...r, unreadCount: 0 } : r
+          )
+        );
+        // Gửi sự kiện updateUnreadCount để cập nhật cho các client khác
+        socket.emit("updateUnreadCount", {
+          roomId: room.id.toString(),
+          userId,
+        });
+      } catch (error) {
+        console.error("Error marking messages as read:", error);
+      }
+    };
+    markMessagesAsRead();
+    // 👉 điều hướng bằng expo-router
+    router.push({
+      pathname: `../../${room.id}`,
+      params: { user: JSON.stringify(room.otherUser) }, // user sẽ được parse lại trong trang chi tiết
+    });
+  };
+
   return (
-    <SafeAreaView>
-      <Text>Chat</Text>
+    <SafeAreaView className="flex-1 bg-white">
+      <View style={styles.container}>
+        <Stack.Screen
+          name="ChatScreen"
+          component={ChatScreen}
+          options={{ headerShown: false }}
+        />
+        <Header title="Chat List" showBackButton={true} />
+
+        {chatRooms.length === 0 ? (
+          <Text style={styles.noChatsText}>No chat rooms available.</Text>
+        ) : (
+          <FlatList
+            data={chatRooms}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.chatItem}
+                onPress={() => handleChatPress(item)}>
+                {item.otherUser.profileImageUrl ? (
+                  <Image
+                    source={{ uri: item.otherUser.profileImageUrl }}
+                    style={styles.avatar}
+                  />
+                ) : (
+                  <View style={[styles.avatar, styles.defaultAvatar]}>
+                    <Text style={styles.avatarText}>
+                      {item.otherUser.name.charAt(0)}
+                    </Text>
+                  </View>
+                )}
+                <View style={styles.chatInfo}>
+                  <Text style={styles.chatName}>{item.otherUser.name}</Text>
+                  <Text style={styles.lastMessage}>{item.lastMessage}</Text>
+                </View>
+                {item.unreadCount > 0 && (
+                  <View style={styles.unreadBadge}>
+                    <Text style={styles.unreadText}>{item.unreadCount}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            )}
+          />
+        )}
+        {/* <Navbar /> */}
+      </View>
     </SafeAreaView>
   );
 };
 
-export default Chat;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F4F4F4",
+  },
+  noChatsText: {
+    fontSize: 16,
+    color: "#999",
+    textAlign: "center",
+    marginTop: 20,
+  },
+  chatItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 15,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    marginBottom: 10,
+    marginHorizontal: 5,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2, // Hiệu ứng nổi trên Android
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  defaultAvatar: {
+    backgroundColor: "#007AFF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  chatInfo: {
+    flex: 1,
+  },
+  chatName: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+  },
+  lastMessage: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 5,
+  },
+  unreadBadge: {
+    backgroundColor: "#FF3B30",
+    borderRadius: 14,
+    minWidth: 26,
+    height: 26,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 6,
+  },
+  unreadText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+});
+
+export default ChatScreen;
+//

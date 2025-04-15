@@ -32,14 +32,14 @@ const Payment = ({
 }: PaymentProps) => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showPaymentMethod, setShowPaymentMethod] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("");
+
   const user = {
     fullName: "John Doe",
     emailAddress: [{ emailAddress: "johndoe@example.com" }],
   };
 
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
-
-  console.log(process.env.EXPO_SECRET_STRIPE_API_KEY!);
   const initializePaymentSheet = async () => {
     const { error } = await initPaymentSheet({
       merchantDisplayName: "Ryde Inc.",
@@ -54,7 +54,7 @@ const Payment = ({
           intentCreationCallback
         ) => {
           const { paymentIntent, customer } = await fetchAPI(
-            "http://192.168.1.3:8081/(api)/(stripe)/create",
+            `${baseURL}/(api)/(stripe)/create`,
             {
               method: "POST",
               headers: {
@@ -72,24 +72,21 @@ const Payment = ({
           );
 
           if (paymentIntent.client_secret) {
-            const { result } = await fetchAPI(
-              "http://192.168.1.3:8081/(api)/(stripe)/pay",
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  payment_method_id: paymentMethod.id,
-                  payment_intent_id: paymentIntent.id,
-                  customer_id: customer,
-                  client_secret: paymentIntent.client_secret,
-                }),
-              }
-            );
+            const { result } = await fetchAPI(`${baseURL}/(api)/(stripe)/pay`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                payment_method_id: paymentMethod.id,
+                payment_intent_id: paymentIntent.id,
+                customer_id: customer,
+                client_secret: paymentIntent.client_secret,
+              }),
+            });
 
             if (result.client_secret) {
-              await fetchAPI("http://192.168.1.3:8081/(api)/ride/create", {
+              await fetchAPI(`${baseURL}/(api)/(stripe)/create`, {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
@@ -132,11 +129,28 @@ const Payment = ({
       Alert.alert(`Error code: ${error.code}`, error.message);
     } else {
       // setSuccess(true);
+      setShowPaymentMethod(false);
+      setShowPaymentModal(true);
+      handleConfrim();
     }
   };
 
-  const handleConfrim = () => actionButton.handleConfirm();
+  const openPaymentMethod = () => {
+    setShowPaymentMethod(true);
+  };
 
+  const onSelectPaymentMethod = () => {
+    console.log("Selected payment method:", paymentMethod);
+    if (paymentMethod == "Momo") {
+      openPaymentSheet();
+    } else {
+      setShowPaymentMethod(false);
+      setShowPaymentModal(true);
+      handleConfrim();
+    }
+    createRide();
+  };
+  const handleConfrim = () => actionButton.handleConfirm();
   const {
     userAddress,
     userLongitude,
@@ -151,7 +165,6 @@ const Payment = ({
   const createRide = async () => {
     try {
       const response = await fetchAPI(`${baseURL}/(api)/ride/create`, {
-        // await fetchAPI("http://localhost:8081/(api)/ride/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -203,7 +216,7 @@ const Payment = ({
             className="z-50"
             data={paymentMethods}
             renderItem={({ item }) => (
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => setPaymentMethod(item)}>
                 <Text style={styles.suggestionText}>{item}</Text>
               </TouchableOpacity>
             )}
@@ -213,16 +226,16 @@ const Payment = ({
           <CustomButton
             title={"OK!"}
             onPress={() => {
-              setShowPaymentMethod(false);
-              setShowPaymentModal(true);
-              createRide();
+              onSelectPaymentMethod();
             }}
             className={"mt-5"}
           />
         </View>
       </ReactNativeModal>
 
-      <ReactNativeModal isVisible={showPaymentModal}>
+      <ReactNativeModal
+        isVisible={showPaymentModal}
+        onBackdropPress={() => setShowPaymentModal(false)}>
         <View className={"bg-white px-7 py-9 rounded-2xl min-h-[300px]"}>
           <Image
             source={images.check}
@@ -242,6 +255,7 @@ const Payment = ({
             }}
             className={"mt-5"}
           />
+
           <CustomButton
             title={"OK!"}
             bgVariant={"outline"}
@@ -258,7 +272,7 @@ const Payment = ({
       <CustomButton
         title="Confirm Ride"
         className="my-10"
-        onPress={openPaymentSheet}
+        onPress={openPaymentMethod}
       />
     </View>
   );

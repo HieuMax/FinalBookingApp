@@ -87,9 +87,9 @@ export async function fetchAndCalcFerryInfo(from: [number, number], to: [number,
   )
 
   const overLimit = ferryInfo.hasAnyOver(2000)
-  console.log(`Ferry segments:`, ferryInfo.distances.map(m => m.toFixed(1)))
-  console.log(`Total ferry distance: ${ferryInfo.totalDistance.toFixed(1)} m`)
-  console.log(`Any segment over 2km: ${overLimit ? 'YES' : 'NO'}`)
+  // console.log(`Ferry segments:`, ferryInfo.distances.map(m => m.toFixed(1)))
+  // console.log(`Total ferry distance: ${ferryInfo.totalDistance.toFixed(1)} m`)
+  // console.log(`Any segment over 2km: ${overLimit ? 'YES' : 'NO'}`)
 
   return overLimit
 }

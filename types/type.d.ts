@@ -1,5 +1,5 @@
 import { TextInputProps, TouchableOpacityProps } from "react-native";
-import { drivers } from '../utils/datadummy';
+import { drivers } from "../utils/datadummy";
 
 declare interface Driver {
   driver_id: number;
@@ -112,11 +112,11 @@ declare interface InputFieldProps extends TextInputProps {
 //   rideTime: number;
 // }
 
-declare interface PaymentProps{
-  actionButton: any,
-  timeToDestion: number,
-  price: number,
-  driverId: number,
+declare interface PaymentProps {
+  actionButton: any;
+  timeToDestion: number;
+  price: number;
+  driverId: number;
 }
 
 declare interface AuthStore {
@@ -192,3 +192,4 @@ declare interface GraphHopperResponse {
   }[];
   message?: string;
 }
+

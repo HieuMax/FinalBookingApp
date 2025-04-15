@@ -1,6 +1,7 @@
 import { Stripe } from "stripe";
 
 const stripe = new Stripe(process.env.EXPO_SECRET_STRIPE_API_KEY!);
+
 export async function POST(request: Request) {
   const body = await request.json();
   const { name, email, amount } = body;

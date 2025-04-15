@@ -51,6 +51,7 @@ const Rides = () => {
           </>
         }
       />
+      
     </SafeAreaView>
   );
 };

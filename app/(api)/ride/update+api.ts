@@ -13,9 +13,9 @@ export async function PUT(request: Request) {
         }
 
         const sql = neon(`${process.env.DATABASE_URL}`);
-        console.log(`DATABASE_URL: ${process.env.DATABASE_URL}`);
-        console.log(`ride_id:: ${ride_id}`);
-        console.log(`status:: ${status}`);
+        // console.log(`DATABASE_URL: ${process.env.DATABASE_URL}`);
+        // console.log(`ride_id:: ${ride_id}`);
+        // console.log(`status:: ${status}`);
         const response = await sql`
         UPDATE rides
         SET status = ${status}

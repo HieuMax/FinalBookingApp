@@ -179,7 +179,7 @@ export const calculateCost = async ({
     if (!data.paths || data.paths.length === 0) {
       return null;
     }
-    console.log(`data: ${JSON.stringify(data)}`);
+    // console.log(`data: ${JSON.stringify(data)}`);
     const path = data.paths[0];
     const distance = path.distance / 1000;
     const time = path.time / 1000 / 60;
@@ -252,7 +252,6 @@ export const calculateDriverTimes__ = async ({
 
       const totalTime = (timeToUser + timeToDes); // Total time in minutes
       const price = (totalTime * 0.5).toFixed(2); // Calculate price based on time
-      console.log("Price: ", price);
       // console.log("Time to user: ", timeToUser);
       // console.log("Time to destination: ", timeToDes);
       return { ...marker, time: { timeToUser, timeToDes }, distance: { distanceToUser, distanceToDes }, price };

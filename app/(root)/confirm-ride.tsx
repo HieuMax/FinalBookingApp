@@ -11,8 +11,8 @@ import { MarkerData } from "@/types/type";
 const ConfirmRide = () => {
   const { drivers, selectedDriver, setSelectedDriver } = useDriverStore();
   useEffect(() => {
-    console.log(`Confirm-ride:Driver::`)
-    console.log(drivers)
+    // console.log(`Confirm-ride:Driver::`)
+    // console.log(drivers)
   }, [])
 
 

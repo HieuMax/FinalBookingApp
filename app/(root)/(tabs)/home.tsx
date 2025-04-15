@@ -38,13 +38,12 @@ export default function Page() {
   const [hasPermissions, setHasPermissions] = useState(false);
 
   // const socket = io(`${baseURL_server}`); // Replace with your WebSocket server URL
-  
   useEffect(() => {
     const socket = getSocket(); // Use the singleton socket instance
   
     // Listen for the pickupSuccess event
     socket.on("pickupSuccess", (updatedRide) => {
-      console.log("Pickup updated:", updatedRide);
+      // console.log("Pickup updated:", updatedRide);
       refetch();
     });
   
@@ -86,8 +85,8 @@ export default function Page() {
   }, [driversFetch, userLatitude, userLongitude]);
 
   useEffect(() => {
-    console.log("driver::home");
-    console.log(driversFetch);
+    // console.log("driver::home");
+    // console.log(driversFetch);
   }, [driversFetch])
 
   useEffect(() => {
@@ -99,8 +98,8 @@ export default function Page() {
         destinationLatitude,
         destinationLongitude,
       }).then((drivers) => {
-        console.log("drivers:calc:");
-        console.log(drivers);
+        // console.log("drivers:calc:");
+        // console.log(drivers);
         setDrivers(drivers as MarkerData[]);
       });
     }
