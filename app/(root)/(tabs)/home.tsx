@@ -84,10 +84,10 @@ export default function Page() {
     }
   }, [driversFetch, userLatitude, userLongitude]);
 
-  useEffect(() => {
+  // useEffect(() => {
     // console.log("driver::home");
     // console.log(driversFetch);
-  }, [driversFetch])
+  // }, [driversFetch])
 
   useEffect(() => {
     if (markers.length > 0 && destinationLatitude && destinationLongitude) {

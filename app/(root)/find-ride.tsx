@@ -49,9 +49,9 @@ const FindRide = () => {
     getValidRoute();
   }, [destinationLongitude,destinationLatitude])
 
-  useEffect(() => {
+  // useEffect(() => {
     // console.log(`FindRide::openForm: ${openForm}`);
-  }, [openForm])
+  // }, [openForm])
 
   return (
     <RideLayout title="Ride" snapPoints={["20%", "85%"]}>

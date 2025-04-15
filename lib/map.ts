@@ -172,14 +172,84 @@ export const calculateCost = async ({
 
   const end = `${endLat},${endLog}`;
 
-  const url = `https://graphhopper.com/api/1/route?point=${start}&point=${end}&vehicle=car&locale=en&key=${process.env.EXPO_PUBLIC_GRAPH_HOOKER_API_KEY}`;
+  
+  const NhaTrang = { lat: 12.2388, lng: 109.1967, name: "Nha Trang" };
+  const DaNang = { lat: 15.8801, lng: 108.3380, name: "Da Nang" };
+  const TamDiep = { lat: 20.236438, lng: 105.803874, name: "Tam Diep" };
+  const Hanoi = { lat: 21.0278, lng: 105.8342, name: "Hanoi" };
+  const HoChiMinh = { lat: 10.8231, lng: 106.6297, name: "Ho Chi Minh City" };
+  const DakNong = { lat: 12.004476, lng: 107.674539, name: "Dak Nong" };
+  const BuonMe = { lat: 12.628157, lng: 108.125542, name: "Buon Me" };
+  const Pleiku = { lat: 13.968291, lng: 108.016791, name: "Pleiku" };
+  
+  const waypoints = [];
+  let url = "";
+  // Nam ra Bac
+  if (endLat > startLat) { 
+
+      if (endLat >= NhaTrang.lat) {
+          if (endLat <= DaNang.lat) {
+              const DesToPleiku = Math.abs(endLog - Pleiku.lng);
+              const DesToNhaTrang = Math.abs(endLog - NhaTrang.lng);
+              if (DesToPleiku < DesToNhaTrang) {
+                  waypoints.push(`${DakNong.lat},${DakNong.lng}`);
+                  waypoints.push(`${BuonMe.lat},${BuonMe.lng}`);
+              } else {
+                  waypoints.push(`${NhaTrang.lat},${NhaTrang.lng}`);
+              }
+          } 
+          
+          else if (startLat <= NhaTrang.lat) {
+              waypoints.push(`${NhaTrang.lat},${NhaTrang.lng}`);
+          }
+      }
+
+      if (endLat >= TamDiep.lat) {
+          waypoints.push(`${TamDiep.lat},${TamDiep.lng}`);
+      } 
+
+      const waypointString = waypoints.join('&point=');
+      console.log(waypointString);
+
+      url = `https://graphhopper.com/api/1/route?point=${start}${waypointString.length > 0 ? `&point=${waypointString}` : ""}&point=${end}&vehicle=car&locale=en&key=${process.env.EXPO_PUBLIC_GRAPH_HOOKER_API_KEY}&weighting=fastest`;
+  } 
+  // Bac vao Nam
+  else {
+      if (endLat <= TamDiep.lat && startLat >= TamDiep.lat) {
+          waypoints.push(`${TamDiep.lat},${TamDiep.lng}`);
+      } 
+
+      if (endLat <= DaNang.lat && startLat >= DaNang.lat) {
+          waypoints.push(`${DaNang.lat},${DaNang.lng}`);
+      } 
+
+      if (endLat <= BuonMe.lat && startLat >= BuonMe.lat) {
+          const DesToPleiku = Math.abs(endLog - Pleiku.lng);
+          const DesToNhaTrang = Math.abs(endLog - NhaTrang.lng);
+          if (DesToPleiku < DesToNhaTrang) {
+              waypoints.push(`${BuonMe.lat},${BuonMe.lng}`);
+              if (endLat <= DakNong.lat) {
+                  waypoints.push(`${DakNong.lat},${DakNong.lng}`);
+              }
+          } else {
+              waypoints.push(`${NhaTrang.lat},${NhaTrang.lng}`);
+          }
+      }
+
+      const waypointString = waypoints.join('&point=');
+      console.log(waypointString);
+      url = `https://graphhopper.com/api/1/route?point=${start}${waypointString.length > 0 ? `&point=${waypointString}` : ""}&point=${end}&vehicle=car&locale=en&key=${process.env.EXPO_PUBLIC_GRAPH_HOOKER_API_KEY}&weighting=fastest`;
+      // url = `https://graphhopper.com/api/1/route?point=${start}&point=${end}&vehicle=car&locale=en&key=${process.env.EXPO_PUBLIC_GRAPH_HOOKER_API_KEY}&weighting=fastest`;
+  }
+
+  // const url = `https://graphhopper.com/api/1/route?point=${start}&point=${end}&vehicle=car&locale=en&key=${process.env.EXPO_PUBLIC_GRAPH_HOOKER_API_KEY}`;
   try {
     const response = await fetch(url);
     const data = (await response.json()) as GraphHopperResponse;
     if (!data.paths || data.paths.length === 0) {
       return null;
     }
-    // console.log(`data: ${JSON.stringify(data)}`);
+    console.log(`data: ${JSON.stringify(data)}`);
     const path = data.paths[0];
     const distance = path.distance / 1000;
     const time = path.time / 1000 / 60;
@@ -252,6 +322,7 @@ export const calculateDriverTimes__ = async ({
 
       const totalTime = (timeToUser + timeToDes); // Total time in minutes
       const price = (totalTime * 0.5).toFixed(2); // Calculate price based on time
+      // console.log("Price: ", price);
       // console.log("Time to user: ", timeToUser);
       // console.log("Time to destination: ", timeToDes);
       return { ...marker, time: { timeToUser, timeToDes }, distance: { distanceToUser, distanceToDes }, price };

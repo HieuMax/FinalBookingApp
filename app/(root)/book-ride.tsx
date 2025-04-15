@@ -33,10 +33,10 @@ const BookRide = () => {
     (driver) => +driver.id === selectedDriver
   )[0];
 
-  useEffect(() => {
+  // useEffect(() => {
     // console.log(`driverDetails::`);
     // console.log(driverDetails)
-  }, []);
+  // }, []);
 
   const actionButton = {
     handleConfirm: () => {
@@ -64,9 +64,9 @@ const BookRide = () => {
     },
   };
 
-  useEffect(() => {
+  // useEffect(() => {
     // console.log(`time::${time}`);
-  }, [time]);
+  // }, [time]);
 
   return (
     <StripeProvider

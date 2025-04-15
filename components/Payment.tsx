@@ -113,6 +113,8 @@ const Payment = ({
           }
         },
       },
+
+      // console.log("Payment method:", paymentIntent);
       returnURL: "myapp://book-ride",
     });
     if (!error) {
@@ -128,9 +130,9 @@ const Payment = ({
     if (error) {
       Alert.alert(`Error code: ${error.code}`, error.message);
     } else {
-      setShowPaymentMethod(false);
-      setShowPaymentModal(true);
-      handleConfrim();
+      // setShowPaymentMethod(false);
+      // setShowPaymentModal(true);
+      // handleConfrim();
     }
   };
 
@@ -145,11 +147,13 @@ const Payment = ({
     } else {
       setShowPaymentMethod(false);
       setShowPaymentModal(true);
-      handleConfrim();
+      // handleConfrim();
     }
     createRide();
   };
+
   const handleConfrim = () => actionButton.handleConfirm();
+  
   const {
     userAddress,
     userLongitude,
