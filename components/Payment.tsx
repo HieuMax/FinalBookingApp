@@ -130,8 +130,8 @@ const Payment = ({
     if (error) {
       Alert.alert(`Error code: ${error.code}`, error.message);
     } else {
-      // setShowPaymentMethod(false);
-      // setShowPaymentModal(true);
+      setShowPaymentMethod(false);
+      setShowPaymentModal(true);
       // handleConfrim();
     }
   };
@@ -151,9 +151,8 @@ const Payment = ({
     }
     createRide();
   };
-
-  const handleConfrim = () => actionButton.handleConfirm();
   
+  const handleConfrim = () => actionButton.handleConfirm();
   const {
     userAddress,
     userLongitude,
