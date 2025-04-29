@@ -14,7 +14,7 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { useAuth } from "@clerk/clerk-expo";
 import { io } from "socket.io-client";
 import Header from "@/components/Header";
-import { baseURL_server } from "../index"; 
+import { baseURL_serverChat } from "../index"; 
 
 
 // Types
@@ -40,7 +40,7 @@ const ChatDetail = () => {
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
 
   const flatListRef = useRef<FlatList>(null);
-  const socket = useRef(io(`${baseURL_server}`)).current;
+  const socket = useRef(io(`${baseURL_serverChat}`)).current;
 
   if (!chatId || !parsedUser) {
     return (
@@ -55,7 +55,7 @@ const ChatDetail = () => {
   const fetchMessages = async () => {
     try {
 
-      const response = await fetch(`${baseURL_server}/messages/${chatId}`);
+      const response = await fetch(`${baseURL_serverChat}/messages/${chatId}`);
       if (!response.ok) {
         throw new Error("Failed to fetch messages");
       }
@@ -71,7 +71,7 @@ const ChatDetail = () => {
   const markMessagesAsRead = async () => {
     try {
       await fetch(
-        `${baseURL_server}//messages/mark-as-read/${chatId}/${userId}`,
+        `${baseURL_serverChat}//messages/mark-as-read/${chatId}/${userId}`,
         {
           method: "POST",
         }

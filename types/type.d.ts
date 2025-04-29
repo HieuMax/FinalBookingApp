@@ -173,9 +173,17 @@ declare interface MarkerStore {
 }
 
 declare interface DriverCardProps {
-  item: MarkerData;
+  item: CarType;
   selected: number;
   setSelected: () => void;
+
+}
+
+declare interface CarType {
+  id: number;
+  name: string;
+  icon: string;
+  seat: number;
 }
 
 declare interface Coordinate {

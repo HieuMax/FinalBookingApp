@@ -20,7 +20,7 @@ import { baseURL, baseURL_server } from "../app/index";
 import { io } from "socket.io-client";
 import { useStripe } from "@stripe/stripe-react-native";
 
-const paymentMethods = ["Cash", "Momo"];
+const paymentMethods = ["Cash", "Card"];
 
 const socket = io(`${baseURL_server}`); // Replace with your WebSocket server URL
 
@@ -31,7 +31,7 @@ const Payment = ({
   driverId,
 }: PaymentProps) => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showPaymentMethod, setShowPaymentMethod] = useState(false);
+  const [showPaymentMethod, setShowPaymentMethod] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState("");
 
   const user = {
@@ -43,6 +43,8 @@ const Payment = ({
   const initializePaymentSheet = async () => {
     const { error } = await initPaymentSheet({
       merchantDisplayName: "Ryde Inc.",
+      allowsDelayedPaymentMethods: true, // optional
+      // Removed invalid property 'automatic_payment_methods'
       intentConfiguration: {
         mode: {
           amount: price * 100,
@@ -142,7 +144,7 @@ const Payment = ({
 
   const onSelectPaymentMethod = () => {
     console.log("Selected payment method:", paymentMethod);
-    if (paymentMethod == "Momo") {
+    if (paymentMethod == "Card") {
       openPaymentSheet();
     } else {
       setShowPaymentMethod(false);
@@ -258,7 +260,7 @@ const Payment = ({
             className={"mt-5"}
           />
 
-          <CustomButton
+          {/* <CustomButton
             title={"OK!"}
             bgVariant={"outline"}
             textVariant="primary"
@@ -267,7 +269,7 @@ const Payment = ({
               router.push("/(root)/(tabs)/home");
             }}
             className={"mt-5 shadow-neutral-100 shadow-sm"}
-          />
+          /> */}
         </View>
       </ReactNativeModal>
 

@@ -57,7 +57,7 @@ const MapComponent: React.FC = () => {
         initialRegion={region}
         userInterfaceStyle="light"
       >
-        {markers &&
+        {/* {markers &&
           markers.map((marker) => (
             <Marker
               key={marker.id}
@@ -72,7 +72,7 @@ const MapComponent: React.FC = () => {
                   : icons.marker
               }
             />
-          ))}
+          ))} */}
         {userLatitude && userLongitude && (
           <Marker coordinate={startPoint} title="Điểm bắt đầu" pinColor="red" />
         )}
